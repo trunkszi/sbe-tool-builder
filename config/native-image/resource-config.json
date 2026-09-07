@@ -1,0 +1,21 @@
+{
+  "resources": {
+    "includes": [
+      { "pattern": "\\QMETA-INF/services/javax.xml.parsers.DocumentBuilderFactory\\E" },
+      { "pattern": "\\QMETA-INF/services/javax.xml.validation.SchemaFactory\\E" },
+      { "pattern": "\\QMETA-INF/services/javax.xml.xpath.XPathFactory\\E" }
+    ]
+  },
+  "bundles": [
+    { "name": "com.sun.org.apache.xerces.internal.impl.msg.XMLMessages" },
+    { "name": "com.sun.org.apache.xerces.internal.impl.msg.XMLSchemaMessages" },
+    { "name": "com.sun.org.apache.xerces.internal.impl.msg.SAXMessages" },
+    { "name": "com.sun.org.apache.xerces.internal.impl.msg.DOMMessages" },
+    { "name": "com.sun.org.apache.xerces.internal.impl.msg.DatatypeMessages" },
+    { "name": "com.sun.org.apache.xerces.internal.impl.msg.XIncludeMessages" },
+    { "name": "com.sun.org.apache.xerces.internal.impl.msg.JAXPValidationMessages" },
+    { "name": "com.sun.org.apache.xerces.internal.impl.xpath.regex.message" },
+    { "name": "com.sun.org.apache.xpath.internal.res.XPATHErrorResources" },
+    { "name": "com.sun.org.apache.xml.internal.res.XMLErrorResources" }
+  ]
+}

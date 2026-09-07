@@ -1,0 +1,140 @@
+name: release
+
+on:
+  schedule:
+    # Daily check for a new upstream SBE release.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: "Upstream ref to build (release tag, branch or commit). Empty = latest release tag."
+        required: false
+        default: ""
+      force:
+        description: "Rebuild and re-upload even if the release already exists."
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  UPSTREAM_REPO: https://github.com/aeron-io/simple-binary-encoding.git
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.resolve.outputs.ref }}
+      commit: ${{ steps.resolve.outputs.commit }}
+      version: ${{ steps.resolve.outputs.version }}
+      tag: ${{ steps.resolve.outputs.tag }}
+      prerelease: ${{ steps.resolve.outputs.prerelease }}
+      build: ${{ steps.check.outputs.build }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: resolve
+        run: scripts/resolve-upstream.sh "${{ inputs.upstream_ref }}" | tee -a "$GITHUB_OUTPUT"
+      - id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "${{ inputs.force }}" != "true" ]] && gh release view "${{ steps.resolve.outputs.tag }}" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "release ${{ steps.resolve.outputs.tag }} already exists; nothing to do"
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: resolve
+    if: needs.resolve.outputs.build == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-x86_64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install native-image system deps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential zlib1g-dev
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: "21.0.2"
+          distribution: graalvm-community
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ needs.resolve.outputs.commit }}
+          restore-keys: gradle-${{ runner.os }}-
+      - name: Toolchain versions
+        run: |
+          java -version
+          native-image --version
+      - name: Build sbe-tool
+        env:
+          TARGET: ${{ matrix.target }}
+          UPSTREAM_REF: ${{ needs.resolve.outputs.ref }}
+          UPSTREAM_COMMIT: ${{ needs.resolve.outputs.commit }}
+          UPSTREAM_VERSION: ${{ needs.resolve.outputs.version }}
+        run: scripts/build.sh
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sbe-tool-${{ matrix.target }}
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    needs: [resolve, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+      - name: Collect assets
+        run: |
+          mkdir -p dist
+          # Binaries per target plus the version-matched XSD (identical across targets).
+          find artifacts -type f \( -name 'sbe-tool-*' -o -name 'sbe-*.xsd' -o -name 'sbe-*.xsd.sha256' \) -exec cp {} dist/ \;
+          (cd dist && sha256sum $(ls sbe-* | grep -v '\.sha256$') > SHA256SUMS)
+          ls -l dist
+          cat dist/SHA256SUMS
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.resolve.outputs.tag }}
+          VERSION: ${{ needs.resolve.outputs.version }}
+          COMMIT: ${{ needs.resolve.outputs.commit }}
+          REF: ${{ needs.resolve.outputs.ref }}
+          PRERELEASE: ${{ needs.resolve.outputs.prerelease }}
+        run: |
+          cat > notes.md <<NOTES
+          Native \`sbe-tool\` built with GraalVM native-image from upstream SBE.
+
+          - upstream: ${UPSTREAM_REPO%.git}/tree/${COMMIT}
+          - ref: \`${REF}\`
+          - version: \`${VERSION}\`
+
+          Assets:
+
+          - \`sbe-tool-${VERSION}-<target>\`: the executable, a drop-in replacement for \`java -jar sbe-all.jar\`
+          - \`sbe-${VERSION}.xsd\`: the schema definition from the same upstream commit, for \`-Dsbe.validation.xsd=<path>\`
+          - \`SHA256SUMS\` and per-asset \`.sha256\` files
+
+          Verify with \`sha256sum -c SHA256SUMS\`.
+          NOTES
+          args=(--repo "$GITHUB_REPOSITORY" --title "sbe-tool ${VERSION}" --notes-file notes.md)
+          [[ "$PRERELEASE" == "true" ]] && args+=(--prerelease)
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber dist/*
+          else
+            gh release create "$TAG" "${args[@]}" dist/*
+          fi

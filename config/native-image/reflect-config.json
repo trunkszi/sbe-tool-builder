@@ -1,0 +1,19 @@
+[
+  { "name": "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xerces.internal.jaxp.validation.XMLSchemaFactory", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xpath.internal.jaxp.XPathFactoryImpl", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xerces.internal.impl.dv.xs.SchemaDVFactoryImpl", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xerces.internal.impl.dv.xs.ExtendedSchemaDVFactoryImpl", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xpath.internal.functions.FuncLocalPart", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xpath.internal.functions.FuncNot", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xpath.internal.functions.FuncCount", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xpath.internal.functions.FuncContains", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xpath.internal.functions.FuncName", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xpath.internal.functions.FuncNamespace", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xpath.internal.functions.FuncString", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xpath.internal.functions.FuncStartsWith", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xpath.internal.functions.FuncNormalizeSpace", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xpath.internal.functions.FuncBoolean", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xpath.internal.functions.FuncPosition", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+  { "name": "com.sun.org.apache.xpath.internal.functions.FuncLast", "methods": [ { "name": "<init>", "parameterTypes": [] } ] }
+]
